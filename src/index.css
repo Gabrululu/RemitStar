@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #000000;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  * {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer components {
+  .hero-headline {
+    @apply font-black leading-[0.94] tracking-tight;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    letter-spacing: -0.035em;
+  }
+
+  .section-headline {
+    @apply font-extrabold leading-[0.96] tracking-tight;
+    font-size: clamp(2.4rem, 5.5vw, 5rem);
+    letter-spacing: -0.03em;
+  }
+
+  .big-display-text {
+    @apply font-black leading-[0.9];
+    font-size: clamp(3rem, 8vw, 7.5rem);
+    letter-spacing: -0.04em;
+  }
+
+  .font-mono, code, pre {
+    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  }
+
+  .in-seconds-gradient {
+    color: #bdf500;
+  }
+
+  .stats-marquee {
+    animation: marquee 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  .badge-marquee {
+    animation: marquee 22s linear infinite;
+    white-space: nowrap;
+  }
+
+  .stats-marquee:hover,
+  .badge-marquee:hover {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+::selection {
+  background: #bdf500;
+  color: #000000;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #2d3131;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bdf500;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
