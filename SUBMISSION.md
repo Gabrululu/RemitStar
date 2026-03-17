@@ -52,7 +52,7 @@ Four contracts use OZ libraries in production-grade patterns:
 - RemitCore:      0x710051f799D05afa3953B7af11A38C214Bc45B3F
 
 ## Frontend
-https://remit-star.vercel.app
+https://remitstar.vercel.app
 
 ## Repository
 https://github.com/Gabrululu/RemitStar
