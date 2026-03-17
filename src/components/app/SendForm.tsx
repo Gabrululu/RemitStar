@@ -37,7 +37,7 @@ function formatReceivedAmount(amount: bigint, currency: string): string {
 }
 
 export default function SendForm() {
-  const { rates } = useExchangeRates();
+  const { rates, isLoading: ratesLoading, error: ratesError, lastUpdated } = useExchangeRates();
   const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
   const [chain, setChain] = useState(chains[0]);
   const [corridor, setCorridor] = useState(CONTRACT_CORRIDORS[0]);
@@ -238,7 +238,28 @@ export default function SendForm() {
                   <div className="mt-3 bg-black border border-white/[0.06] rounded-xl p-3 flex flex-col gap-2 text-sm">
                     <div className="flex justify-between"><span className="text-[#8e9191]">Protocol fee (0.3%)</span><span className="text-white font-mono">{quote ? formatUSDC(quote.fee) : '—'} USDC</span></div>
                     <div className="flex justify-between"><span className="text-[#8e9191]">Network fee</span><span className="text-white font-mono">~$0.002</span></div>
-                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1"><span className="text-white font-semibold">Rate</span><span className="text-white font-mono font-bold">1 USDC = {(rates?.[corridor.currency] ?? corridor.rate).toLocaleString()} {corridor.currency}</span></div>
+                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-white font-semibold">Rate</span>
+                        {lastUpdated && (
+                          <span className="text-[#4a4d4d] text-[0.6rem]">
+                            Updated {Math.round((Date.now() - lastUpdated.getTime()) / 60000)}m ago
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="text-white font-mono font-bold">
+                          1 USDC = {(rates?.[corridor.currency] ?? corridor.rate).toFixed(4)} {corridor.currency}
+                        </span>
+                        {ratesLoading ? (
+                          <span className="flex items-center gap-1 text-[0.6rem] text-[#8e9191]"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />Loading...</span>
+                        ) : ratesError || rates === null ? (
+                          <span className="flex items-center gap-1 text-[0.6rem] text-yellow-400"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block" />Estimated</span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[0.6rem] text-green-400"><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />Live</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}

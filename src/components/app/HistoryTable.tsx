@@ -4,6 +4,7 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import { useTransferHistory } from '../../lib/hooks/useTransferHistory';
 import { useWallet } from '../../lib/hooks/useWallet';
 import { CORRIDORS, corridorId as calcCorridorId } from '../../lib/contracts';
+import { useExchangeRates } from '../../lib/hooks/useExchangeRates';
 import { formatTxHash } from '../../lib/utils/format';
 
 type Filter = 'All' | 'Completed' | 'Pending';
@@ -25,6 +26,7 @@ export default function HistoryTable() {
 
   const { isConnected } = useWallet();
   const { transfers, isLoading, refetch } = useTransferHistory();
+  const { rates, isLoading: ratesLoading } = useExchangeRates();
 
   if (!isConnected) {
     return (
@@ -68,10 +70,11 @@ export default function HistoryTable() {
       </div>
 
       <div className="bg-[#0a0a0a] border border-white/[0.08] rounded-2xl overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 px-5 py-3 text-[#8e9191] text-xs font-semibold uppercase tracking-widest border-b border-white/[0.06]">
+        <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_1fr_auto_auto] gap-4 px-5 py-3 text-[#8e9191] text-xs font-semibold uppercase tracking-widest border-b border-white/[0.06]">
           <span>Block</span>
           <span>Amount</span>
           <span>Corridor</span>
+          <span>Current Value</span>
           <span>Status</span>
           <span>Fee</span>
         </div>
@@ -79,9 +82,10 @@ export default function HistoryTable() {
         {isLoading && filtered.length === 0 ? (
           <div className="flex flex-col gap-0">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 px-5 py-4 border-b border-white/[0.05]">
+              <div key={i} className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] gap-4 px-5 py-4 border-b border-white/[0.05]">
                 <div className="h-4 bg-white/[0.06] rounded animate-pulse" />
                 <div className="h-4 bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-4 bg-white/[0.06] rounded animate-pulse hidden md:block" />
                 <div className="h-4 bg-white/[0.06] rounded animate-pulse hidden md:block" />
                 <div className="h-4 w-16 bg-white/[0.06] rounded animate-pulse hidden md:block" />
                 <div className="h-4 w-12 bg-white/[0.06] rounded animate-pulse hidden md:block" />
@@ -98,7 +102,7 @@ export default function HistoryTable() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => setExpandedRow(expandedRow === transfer.transferId ? null : transfer.transferId)}
-                className="w-full grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto_auto] gap-3 md:gap-4 items-center px-5 py-4 border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors text-left"
+                className="w-full grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] gap-3 md:gap-4 items-center px-5 py-4 border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors text-left"
               >
                 <div>
                   <div className="text-white text-sm font-medium">Block #{transfer.blockNumber}</div>
@@ -116,6 +120,22 @@ export default function HistoryTable() {
                   <span className="text-[#8e9191]">→</span>
                   <span>{findCorridorFlag(transfer.corridorId)}</span>
                   <span className="text-[#8e9191] hidden md:inline">{transfer.corridorLabel.split('→')[1]?.trim()}</span>
+                </div>
+                <div className="hidden md:block">
+                  {(() => {
+                    const c = CORRIDORS.find(cor => calcCorridorId(cor.id).toLowerCase() === transfer.corridorId.toLowerCase());
+                    const liveRate = c ? (rates?.[c.currency] ?? c.rate) : null;
+                    const amtNum = parseFloat(transfer.amountIn);
+                    if (!c || ratesLoading || liveRate === null || isNaN(amtNum)) {
+                      return <span className="text-[#8e9191] text-sm font-mono">—</span>;
+                    }
+                    return (
+                      <div>
+                        <div className="text-white text-sm font-mono">{(amtNum * liveRate).toFixed(2)} {c.currency}</div>
+                        <div className="text-[#4a4d4d] text-xs">at today's rate</div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div>
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[rgba(189,245,0,0.08)] text-[#bdf500] border border-[rgba(189,245,0,0.2)]">

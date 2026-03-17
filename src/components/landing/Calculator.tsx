@@ -7,6 +7,12 @@ import { ADDRESSES, REMIT_CORE_ABI, corridorId as calcCorridorId } from '../../l
 import { parseUSDC } from '../../lib/utils/format';
 import { useExchangeRates } from '../../lib/hooks/useExchangeRates';
 
+function RateBadge({ rates, isLoading, error }: { rates: Record<string, number> | null; isLoading: boolean; error: string | null }) {
+  if (isLoading) return <span className="flex items-center gap-1 text-[0.6rem] text-[#8e9191]"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />Loading...</span>;
+  if (error || rates === null) return <span className="flex items-center gap-1 text-[0.6rem] text-yellow-400"><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block" />Estimated</span>;
+  return <span className="flex items-center gap-1 text-[0.6rem] text-green-400"><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />Live</span>;
+}
+
 const CALC_CORRIDORS = [
   { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.74,  symbol: 'S/'  },
   { id: 'US_PH', label: 'Philippines 🇵🇭', currency: 'PHP', rate: 56.2,  symbol: '₱'   },
@@ -49,7 +55,7 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: {
 }
 
 export default function Calculator() {
-  const { rates } = useExchangeRates();
+  const { rates, isLoading: ratesLoading, error: ratesError, lastUpdated } = useExchangeRates();
   const [amount, setAmount] = useState('200');
   const [selectedChain, setSelectedChain] = useState(chains[0]);
   const [selectedCorridor, setSelectedCorridor] = useState(CALC_CORRIDORS[0]);
@@ -260,22 +266,20 @@ export default function Calculator() {
             {[
               { label: 'Protocol fee', value: feeNum, prefix: '$', decimals: 3, sub: '0.3%', green: false },
               { label: 'Network fee', valueStr: '~$0.002', sub: 'Polkadot Hub', green: false },
-              { label: 'Exchange rate', valueStr: liveRate.toLocaleString(), sub: `1 USDC → ${selectedCorridor.currency}`, green: false },
-              { label: 'Arrival time', valueStr: '~6 seconds', sub: 'avg 5.8s', green: true },
             ].map((item) => (
               <div
                 key={item.label}
                 className="rounded-xl p-3"
                 style={{
                   background: 'rgba(0,0,0,0.4)',
-                  border: `1px solid ${item.green ? 'rgba(189,245,0,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                  border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
                 <div className="flex items-center gap-1.5 text-[#747878] text-[0.65rem] mb-1.5">
-                  {item.green ? <Zap size={10} className="text-[#bdf500]" /> : <Clock size={10} />}
+                  <Clock size={10} />
                   {item.label}
                 </div>
-                <div className={`font-mono font-bold text-sm ${item.green ? 'text-[#bdf500]' : 'text-white'}`}>
+                <div className="font-mono font-bold text-sm text-white">
                   {item.value !== undefined ? (
                     <AnimatedNumber value={item.value} prefix={item.prefix} decimals={item.decimals} />
                   ) : (
@@ -285,6 +289,41 @@ export default function Calculator() {
                 <div className="text-[#4a4d4d] text-[0.62rem] mt-0.5">{item.sub}</div>
               </div>
             ))}
+
+            {/* Exchange rate cell — shows live/estimated badge + lastUpdated */}
+            <div
+              className="rounded-xl p-3"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5 text-[#747878] text-[0.65rem]">
+                  <Clock size={10} />
+                  Exchange rate
+                </div>
+                <RateBadge rates={rates} isLoading={ratesLoading} error={ratesError} />
+              </div>
+              <div className="font-mono font-bold text-sm text-white">{liveRate.toFixed(4)}</div>
+              <div className="text-[#4a4d4d] text-[0.62rem] mt-0.5">
+                {`1 USDC → ${selectedCorridor.currency}`}
+                {lastUpdated && (
+                  <span className="ml-1">
+                    · {Math.round((Date.now() - lastUpdated.getTime()) / 60000)}m ago
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="rounded-xl p-3"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(189,245,0,0.15)' }}
+            >
+              <div className="flex items-center gap-1.5 text-[#747878] text-[0.65rem] mb-1.5">
+                <Zap size={10} className="text-[#bdf500]" />
+                Arrival time
+              </div>
+              <div className="font-mono font-bold text-sm text-[#bdf500]">~6 seconds</div>
+              <div className="text-[#4a4d4d] text-[0.62rem] mt-0.5">avg 5.8s</div>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -322,10 +361,10 @@ export default function Calculator() {
                   <span className="text-xl shrink-0 mt-0.5">💰</span>
                   <div>
                     <div className="text-[#bdf500] font-bold text-sm mb-0.5">
-                      You save ${savings.toFixed(2)} vs Western Union
+                      You save {((numAmount * liveRate * 0.997) - (numAmount * liveRate * 0.935)).toFixed(2)} {selectedCorridor.currency} vs Western Union
                     </div>
                     <div className="text-[#8e9191] text-xs">
-                      WU charges ${westernUnionFee.toFixed(2)} (6.5%) — RemitStar charges ${feeNum.toFixed(3)} (0.3%). That's {((savings / westernUnionFee) * 100).toFixed(0)}% less in fees.
+                      WU delivers {(numAmount * liveRate * 0.935).toFixed(2)} {selectedCorridor.currency} (6.5% fee) — RemitStar delivers {(numAmount * liveRate * 0.997).toFixed(2)} {selectedCorridor.currency} (0.3% fee). That's {((savings / westernUnionFee) * 100).toFixed(0)}% less in fees.
                     </div>
                   </div>
                 </div>
