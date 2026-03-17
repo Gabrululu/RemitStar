@@ -5,6 +5,7 @@ import { usePublicClient } from 'wagmi';
 import { chains } from '../../data/content';
 import { ADDRESSES, REMIT_CORE_ABI, corridorId as calcCorridorId } from '../../lib/contracts';
 import { parseUSDC } from '../../lib/utils/format';
+import { useExchangeRates } from '../../lib/hooks/useExchangeRates';
 
 const CALC_CORRIDORS = [
   { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.74,  symbol: 'S/'  },
@@ -48,6 +49,7 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: {
 }
 
 export default function Calculator() {
+  const { rates } = useExchangeRates();
   const [amount, setAmount] = useState('200');
   const [selectedChain, setSelectedChain] = useState(chains[0]);
   const [selectedCorridor, setSelectedCorridor] = useState(CALC_CORRIDORS[0]);
@@ -81,6 +83,8 @@ export default function Calculator() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [amount, selectedCorridor.id, publicClient]);
 
+  const liveRate = rates?.[selectedCorridor.currency] ?? selectedCorridor.rate;
+
   const feeNum = quote ? Number(quote.fee) / 1e6 : numAmount * 0.003;
   const westernUnionFee = numAmount * 0.065;
   const savings = westernUnionFee - feeNum;
@@ -89,7 +93,7 @@ export default function Calculator() {
     ? (selectedCorridor.currency === 'IDR' || selectedCorridor.currency === 'VND')
       ? Number(quote.amountOut)
       : Number(quote.amountOut) / 1e6
-    : (numAmount - feeNum) * selectedCorridor.rate;
+    : (numAmount - feeNum) * liveRate;
 
   return (
     <section id="calculator" className="py-24 md:py-32 px-5 md:px-8 lg:px-12 bg-black">
@@ -256,7 +260,7 @@ export default function Calculator() {
             {[
               { label: 'Protocol fee', value: feeNum, prefix: '$', decimals: 3, sub: '0.3%', green: false },
               { label: 'Network fee', valueStr: '~$0.002', sub: 'Polkadot Hub', green: false },
-              { label: 'Exchange rate', valueStr: selectedCorridor.rate.toLocaleString(), sub: `1 USDC → ${selectedCorridor.currency}`, green: false },
+              { label: 'Exchange rate', valueStr: liveRate.toLocaleString(), sub: `1 USDC → ${selectedCorridor.currency}`, green: false },
               { label: 'Arrival time', valueStr: '~6 seconds', sub: 'avg 5.8s', green: true },
             ].map((item) => (
               <div

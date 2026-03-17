@@ -7,6 +7,7 @@ import { useWallet } from '../../lib/hooks/useWallet';
 import { useSendRemittance } from '../../lib/hooks/useSendRemittance';
 import { useTokenBalance } from '../../lib/hooks/useTokenBalance';
 import { formatUSDC, parseUSDC } from '../../lib/utils/format';
+import { useExchangeRates } from '../../lib/hooks/useExchangeRates';
 
 const TOKEN_OPTIONS = [
   { id: 'usdc', name: 'USDC', address: ADDRESSES.USDC },
@@ -36,6 +37,7 @@ function formatReceivedAmount(amount: bigint, currency: string): string {
 }
 
 export default function SendForm() {
+  const { rates } = useExchangeRates();
   const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
   const [chain, setChain] = useState(chains[0]);
   const [corridor, setCorridor] = useState(CONTRACT_CORRIDORS[0]);
@@ -236,7 +238,7 @@ export default function SendForm() {
                   <div className="mt-3 bg-black border border-white/[0.06] rounded-xl p-3 flex flex-col gap-2 text-sm">
                     <div className="flex justify-between"><span className="text-[#8e9191]">Protocol fee (0.3%)</span><span className="text-white font-mono">{quote ? formatUSDC(quote.fee) : '—'} USDC</span></div>
                     <div className="flex justify-between"><span className="text-[#8e9191]">Network fee</span><span className="text-white font-mono">~$0.002</span></div>
-                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1"><span className="text-white font-semibold">Rate</span><span className="text-white font-mono font-bold">1 USDC = {corridor.rate} {corridor.currency}</span></div>
+                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1"><span className="text-white font-semibold">Rate</span><span className="text-white font-mono font-bold">1 USDC = {(rates?.[corridor.currency] ?? corridor.rate).toLocaleString()} {corridor.currency}</span></div>
                   </div>
                 </motion.div>
               )}
