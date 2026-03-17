@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Check } from 'lucide-react';
 
@@ -100,7 +100,7 @@ function PricingCard({
 
 export default function Pricing() {
   return (
-    <section className="py-24 md:py-32 px-5 md:px-8 lg:px-12 bg-[#060606]">
+    <section id="pricing" className="py-24 md:py-32 px-5 md:px-8 lg:px-12 bg-[#060606]">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

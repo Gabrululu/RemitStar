@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Link2, Shield, Globe, TrendingDown, ArrowUpRight } from 'lucide-react';
 
@@ -28,7 +28,7 @@ const features = [
     icon: <TrendingDown size={20} />,
     title: 'Industry-lowest fees',
     label: '0.3% protocol fee',
-    description: 'Traditional remittances charge 5–7% plus hidden currency markups. RemitFlow charges a flat 0.3% protocol fee with transparent on-chain exchange rates. No surprises.',
+    description: 'Traditional remittances charge 5–7% plus hidden currency markups. RemitStar charges a flat 0.3% protocol fee with transparent on-chain exchange rates. No surprises.',
     stat: '0.3% flat',
   },
   {
@@ -151,7 +151,7 @@ export default function WhyPolkadot() {
           <div className="w-14 h-14 rounded-2xl bg-[rgba(189,245,0,0.08)] border border-[rgba(189,245,0,0.2)] flex items-center justify-center text-[#bdf500] text-2xl shrink-0">●</div>
           <div className="flex-1 text-center md:text-left">
             <div className="text-white font-bold text-lg mb-1">Cross-chain on Polkadot Hub EVM</div>
-            <div className="text-[#8e9191] text-sm">RemitFlow runs natively on Polkadot Hub EVM — demonstrating real-world cross-chain remittance use cases with XCM and on-chain finality.</div>
+            <div className="text-[#8e9191] text-sm">RemitStar runs natively on Polkadot Hub EVM — demonstrating real-world cross-chain remittance use cases with XCM and on-chain finality.</div>
           </div>
           <a
             href="/docs"

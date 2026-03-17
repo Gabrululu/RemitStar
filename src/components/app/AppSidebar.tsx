@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Send, History, Droplets, Settings, ArrowLeft, ChevronLeft } from 'lucide-react';
 
@@ -27,7 +26,7 @@ export default function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         {!collapsed && (
           <button onClick={() => navigate('/')} className="flex items-center gap-2 group">
             <span className="text-[#bdf500] text-xl font-bold">●</span>
-            <span className="text-white font-extrabold text-base tracking-tight">RemitFlow</span>
+            <span className="text-white font-extrabold text-base tracking-tight">RemitStar</span>
           </button>
         )}
         {collapsed && (

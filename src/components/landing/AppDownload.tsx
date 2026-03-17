@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Smartphone, Zap, Shield, ArrowUpRight, Check } from 'lucide-react';
+import { Bell, Smartphone, Zap, Shield, Check } from 'lucide-react';
 
 function AppStoreBadge({ store }: { store: 'apple' | 'google' }) {
   const isApple = store === 'apple';
@@ -178,7 +178,7 @@ export default function AppDownload() {
                 </h2>
 
                 <p className="text-[#8e9191] text-[0.92rem] leading-relaxed mb-8 max-w-[34ch]">
-                  We're putting the final touches on the RemitFlow mobile experience. Be the first to know when it's ready.
+                  We're putting the final touches on the RemitStar mobile experience. Be the first to know when it's ready.
                 </p>
 
                 <div className="space-y-3 mb-10">

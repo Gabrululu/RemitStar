@@ -1,11 +1,45 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Droplets, TrendingUp, Info, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
-import { poolStats } from '../../data/mockData';
+import { Droplets, TrendingUp, Info, ArrowDownToLine, ArrowUpFromLine, Loader2 } from 'lucide-react';
+import { useLiquidityPool } from '../../lib/hooks/useLiquidityPool';
+import { useTokenBalance } from '../../lib/hooks/useTokenBalance';
+import { useWallet } from '../../lib/hooks/useWallet';
+import { ADDRESSES } from '../../lib/contracts';
+import { formatUSDC, parseUSDC } from '../../lib/utils/format';
 
 export default function LiquidityPool() {
   const [tab, setTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [amount, setAmount] = useState('');
+  const [txError, setTxError] = useState<string | undefined>();
+  const [txPending, setTxPending] = useState(false);
+
+  const { isConnected, isCorrectNetwork } = useWallet();
+  const { poolStats, userShares, userAssetValue, apy, isLoading, deposit, withdraw } = useLiquidityPool();
+  const { formatted: walletBalance } = useTokenBalance(ADDRESSES.USDC);
+
+  const totalSharesStr = poolStats ? poolStats.totalShares.toString() : '—';
+  const sharePercent = poolStats && poolStats.totalShares > 0n
+    ? ((Number(userShares) / Number(poolStats.totalShares)) * 100).toFixed(4) + '%'
+    : '0.00%';
+
+  const handleAction = async () => {
+    if (!isConnected || !isCorrectNetwork || !amount || parseFloat(amount) <= 0) return;
+    setTxError(undefined);
+    setTxPending(true);
+    try {
+      if (tab === 'deposit') {
+        await deposit(parseUSDC(amount));
+      } else {
+        await withdraw(parseUSDC(amount));
+      }
+      setAmount('');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Transaction failed';
+      setTxError(msg.slice(0, 120));
+    } finally {
+      setTxPending(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto w-full">
@@ -13,9 +47,17 @@ export default function LiquidityPool() {
 
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Total TVL', value: poolStats.tvl, icon: <Droplets size={18} /> },
-          { label: 'Pool APY', value: poolStats.apy, icon: <TrendingUp size={18} /> },
-          { label: 'Volume 24h', value: poolStats.volume24h, icon: <TrendingUp size={18} /> },
+          {
+            label: 'Total TVL',
+            value: poolStats ? `$${formatUSDC(poolStats.totalAssets)}` : isLoading ? '…' : '$0.00',
+            icon: <Droplets size={18} />,
+          },
+          { label: 'Pool APY', value: isLoading ? '…' : apy, icon: <TrendingUp size={18} /> },
+          {
+            label: 'Fees Collected',
+            value: poolStats ? `$${formatUSDC(poolStats.feesCollected)}` : isLoading ? '…' : '$0.00',
+            icon: <TrendingUp size={18} />,
+          },
         ].map((stat) => (
           <motion.div
             key={stat.label}
@@ -44,25 +86,25 @@ export default function LiquidityPool() {
 
           <div className="space-y-4">
             <div className="bg-black rounded-xl p-4 border border-white/[0.06]">
-              <div className="text-[#8e9191] text-xs mb-1">Deposited</div>
+              <div className="text-[#8e9191] text-xs mb-1">Your value</div>
               <div className="text-white text-2xl font-black font-mono">
-                {poolStats.yourDeposit} <span className="text-[#8e9191] text-sm font-normal">USDC</span>
+                {isConnected ? formatUSDC(userAssetValue) : '0.00'} <span className="text-[#8e9191] text-sm font-normal">USDC</span>
               </div>
             </div>
             <div className="bg-black rounded-xl p-4 border border-white/[0.06]">
-              <div className="text-[#8e9191] text-xs mb-1">Earned fees</div>
+              <div className="text-[#8e9191] text-xs mb-1">Your shares</div>
               <div className="text-[#bdf500] text-2xl font-black font-mono">
-                {poolStats.earned} <span className="text-[#8e9191] text-sm font-normal">USDC</span>
+                {isConnected ? userShares.toString() : '0'} <span className="text-[#8e9191] text-sm font-normal">rfLP</span>
               </div>
             </div>
             <div className="bg-black rounded-xl p-4 border border-white/[0.06] flex items-center justify-between">
               <div>
                 <div className="text-[#8e9191] text-xs mb-0.5">Share of pool</div>
-                <div className="text-white font-bold font-mono">0.00%</div>
+                <div className="text-white font-bold font-mono">{isConnected ? sharePercent : '0.00%'}</div>
               </div>
               <div>
-                <div className="text-[#8e9191] text-xs mb-0.5">Current APY</div>
-                <div className="text-[#bdf500] font-bold font-mono">{poolStats.apy}</div>
+                <div className="text-[#8e9191] text-xs mb-0.5">Total shares</div>
+                <div className="text-[#bdf500] font-bold font-mono text-sm">{isConnected ? totalSharesStr : '—'}</div>
               </div>
             </div>
           </div>
@@ -106,26 +148,44 @@ export default function LiquidityPool() {
                 onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 bg-transparent text-white text-2xl font-bold font-mono outline-none"
               />
-              <button className="text-[#bdf500] text-xs font-bold hover:text-[#d8ff7b]">MAX</button>
+              {tab === 'deposit' && (
+                <button
+                  onClick={() => setAmount(walletBalance)}
+                  className="text-[#bdf500] text-xs font-bold hover:text-[#d8ff7b]"
+                >
+                  MAX
+                </button>
+              )}
             </div>
+            {tab === 'deposit' && isConnected && (
+              <div className="text-[#8e9191] text-xs mt-1.5 font-mono">Wallet: {walletBalance} USDC</div>
+            )}
           </div>
 
           <div className="bg-black rounded-xl p-3 border border-white/[0.06] mb-4 text-sm space-y-2">
             <div className="flex justify-between text-[#8e9191]">
               <span>Pool share after</span>
-              <span className="text-white">0.00%</span>
+              <span className="text-white">{sharePercent}</span>
             </div>
             <div className="flex justify-between text-[#8e9191]">
               <span>Estimated APY</span>
-              <span className="text-[#bdf500] font-semibold">{poolStats.apy}</span>
+              <span className="text-[#bdf500] font-semibold">{apy}</span>
             </div>
           </div>
 
+          {txError && (
+            <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 text-red-400 text-xs">
+              {txError}
+            </div>
+          )}
+
           <button
-            disabled={!amount || parseFloat(amount) <= 0}
+            onClick={handleAction}
+            disabled={!amount || parseFloat(amount) <= 0 || !isConnected || !isCorrectNetwork || txPending}
             className="w-full bg-[#bdf500] hover:bg-[#d8ff7b] disabled:bg-white/[0.07] disabled:text-white/30 text-black font-bold py-3.5 rounded-xl transition-all capitalize"
           >
-            {tab === 'deposit' ? 'Deposit USDC' : 'Withdraw USDC'}
+            {txPending && <Loader2 size={14} className="inline mr-2 animate-spin" />}
+            {!isConnected ? 'Connect Wallet' : !isCorrectNetwork ? 'Switch Network' : txPending ? (tab === 'deposit' ? 'Depositing...' : 'Withdrawing...') : (tab === 'deposit' ? 'Deposit USDC' : 'Withdraw USDC')}
           </button>
         </div>
       </div>

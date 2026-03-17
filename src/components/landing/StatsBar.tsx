@@ -1,17 +1,42 @@
-import React from 'react';
-
-const stats = [
-  { label: 'Total Volume', value: '$2,847,392' },
-  { label: 'Transfers Today', value: '1,284' },
-  { label: 'Avg. Settlement', value: '5.8s' },
-  { label: 'Corridors', value: '12 active' },
-  { label: 'Avg. Fee', value: '0.31%' },
-  { label: 'Active Users', value: '8,492' },
-  { label: 'Uptime', value: '99.98%' },
-  { label: 'Countries', value: '20+' },
-];
+import { useEffect } from 'react';
+import { useReadContract } from 'wagmi';
+import { ADDRESSES, REMIT_CORE_ABI, LIQUIDITY_POOL_ABI } from '../../lib/contracts';
+import { formatUSDC } from '../../lib/utils/format';
 
 export default function StatsBar() {
+  const { data: nonce, refetch: refetchNonce } = useReadContract({
+    address: ADDRESSES.RemitCore,
+    abi: REMIT_CORE_ABI,
+    functionName: 'transferNonce',
+    query: { refetchInterval: 30_000 },
+  });
+
+  const { data: totalAssets, refetch: refetchAssets } = useReadContract({
+    address: ADDRESSES.LiquidityPool,
+    abi: LIQUIDITY_POOL_ABI,
+    functionName: 'totalAssets',
+    query: { refetchInterval: 30_000 },
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void refetchNonce();
+      void refetchAssets();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [refetchNonce, refetchAssets]);
+
+  const stats = [
+    { label: 'Transfers', value: nonce !== undefined ? nonce.toString() : '…' },
+    { label: 'Total TVL', value: totalAssets !== undefined ? `$${formatUSDC(totalAssets as bigint)}` : '…' },
+    { label: 'Avg. Settlement', value: '5.8s' },
+    { label: 'Avg. Fee', value: '0.30%' },
+    { label: 'Supported Corridors', value: '5' },
+    { label: 'Network', value: 'Polkadot Hub' },
+    { label: 'Uptime', value: '99.98%' },
+    { label: 'Countries', value: '5+' },
+  ];
+
   return (
     <div className="border-y border-white/[0.07] bg-[#060606] overflow-hidden">
       <div className="stats-marquee flex py-4">

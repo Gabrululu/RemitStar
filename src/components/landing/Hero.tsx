@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Send, Clock, Shield, Wifi } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +40,7 @@ function PhoneMockup() {
           <div className="px-5 pt-10 pb-7">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[#4a4d4d] text-[0.6rem] font-semibold uppercase tracking-widest mb-0.5">RemitFlow</p>
+                <p className="text-[#4a4d4d] text-[0.6rem] font-semibold uppercase tracking-widest mb-0.5">RemitStar</p>
                 <p className="text-white text-[0.78rem] font-bold">Good morning, Ana</p>
               </div>
               <div

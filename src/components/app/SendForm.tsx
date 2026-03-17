@@ -1,60 +1,110 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ArrowRight, CheckCircle2, Loader2, Sparkles, Info } from 'lucide-react';
-import { chains, tokens, destinationCorridors } from '../../data/mockData';
+import { ChevronDown, ArrowRight, CheckCircle2, Loader2, Sparkles, Info, ExternalLink } from 'lucide-react';
+import { chains } from '../../data/content';
+import { ADDRESSES } from '../../lib/contracts';
+import { useWallet } from '../../lib/hooks/useWallet';
+import { useSendRemittance } from '../../lib/hooks/useSendRemittance';
+import { useTokenBalance } from '../../lib/hooks/useTokenBalance';
+import { formatUSDC, parseUSDC } from '../../lib/utils/format';
 
-type Step = 'idle' | 'bridging' | 'routing' | 'settling' | 'complete';
+const TOKEN_OPTIONS = [
+  { id: 'usdc', name: 'USDC', address: ADDRESSES.USDC },
+  { id: 'usdt', name: 'USDT', address: ADDRESSES.USDT },
+];
 
-const steps: Step[] = ['bridging', 'routing', 'settling', 'complete'];
-const stepLabels: Record<Step, string> = {
-  idle: '',
-  bridging: 'Bridging to Polkadot Hub...',
-  routing: 'Routing via XCM...',
-  settling: 'Settling on destination...',
-  complete: 'Transfer Complete!',
+const CONTRACT_CORRIDORS = [
+  { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.74,  symbol: 'S/'  },
+  { id: 'US_PH', label: 'Philippines 🇵🇭', currency: 'PHP', rate: 56.2,  symbol: '₱'   },
+  { id: 'US_ID', label: 'Indonesia 🇮🇩',   currency: 'IDR', rate: 16240, symbol: 'Rp'  },
+  { id: 'US_MX', label: 'Mexico 🇲🇽',      currency: 'MXN', rate: 17.2,  symbol: '$'   },
+  { id: 'US_CO', label: 'Colombia 🇨🇴',    currency: 'COP', rate: 4100,  symbol: '$'   },
+];
+
+const TX_STEPS = ['approving', 'sending', 'confirming'] as const;
+const TX_STEP_LABELS: Record<string, string> = {
+  approving:  'Approving USDC...',
+  sending:    'Sending remittance...',
+  confirming: 'Confirming on chain...',
 };
 
+function formatReceivedAmount(amount: bigint, currency: string): string {
+  if (currency === 'IDR' || currency === 'VND') {
+    return Number(amount).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+  return (Number(amount) / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
 export default function SendForm() {
-  const [amount, setAmount] = useState('');
-  const [token, setToken] = useState(tokens[0]);
+  const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
   const [chain, setChain] = useState(chains[0]);
-  const [corridor, setCorridor] = useState(destinationCorridors[0]);
+  const [corridor, setCorridor] = useState(CONTRACT_CORRIDORS[0]);
+  const [amountIn, setAmountIn] = useState('');
   const [recipient, setRecipient] = useState('');
   const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
   const [showTokenDropdown, setShowTokenDropdown] = useState(false);
   const [showChainDropdown, setShowChainDropdown] = useState(false);
   const [showCorridorDropdown, setShowCorridorDropdown] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState<Step>('idle');
+  const [quote, setQuote] = useState<{ fee: bigint; netAmount: bigint; amountOut: bigint } | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const numAmount = parseFloat(amount) || 0;
-  const protocolFee = numAmount * 0.003;
-  const networkFee = 0.002;
-  const totalFee = protocolFee + networkFee;
-  const received = (numAmount - totalFee) * corridor.rate;
+  const { isConnected, isCorrectNetwork, connect, switchToPolkadot } = useWallet();
+  const { formatted: balanceFormatted } = useTokenBalance(selectedToken.address);
+  const { getQuote, send, step, txHash, error, isLoading, reset } = useSendRemittance();
 
-  const handleSend = () => {
-    setModalOpen(true);
-    setCurrentStep('bridging');
-    let i = 0;
-    const next = () => {
-      i++;
-      if (i < steps.length) {
-        setTimeout(() => {
-          setCurrentStep(steps[i]);
-          next();
-        }, i === steps.length - 1 ? 1000 : 1500);
+  const numAmount = parseFloat(amountIn) || 0;
+  const modalOpen = step !== 'idle';
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (numAmount <= 0) { setQuote(null); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await getQuote(corridor.id, parseUSDC(amountIn), selectedToken.address);
+        setQuote(result);
+      } catch (e) {
+        // quote failed — RPC or corridor not active
+        setQuote(null);
       }
-    };
-    setTimeout(next, 1500);
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [amountIn, corridor.id, selectedToken.address]);
+
+  const handleSend = async () => {
+    if (!isConnected) { connect(); return; }
+    if (!isCorrectNetwork) { switchToPolkadot(); return; }
+    if (!recipient || !quote) return;
+    await send({
+      token: selectedToken.address,
+      corridorId: corridor.id,
+      amountIn: parseUSDC(amountIn),
+      recipient: recipient as `0x${string}`,
+    });
   };
 
   const handleClose = () => {
-    setModalOpen(false);
-    setCurrentStep('idle');
-    setAmount('');
+    reset();
+    setAmountIn('');
     setRecipient('');
+    setQuote(null);
   };
+
+  const currentTxIndex = TX_STEPS.indexOf(step as typeof TX_STEPS[number]);
+  const isSubmitDisabled = !quote || isLoading || !amountIn || !recipient || numAmount <= 0;
+
+  const submitLabel = (() => {
+    if (!isConnected) return 'Connect Wallet';
+    if (!isCorrectNetwork) return 'Switch Network';
+    if (step === 'approving') return 'Approving USDC...';
+    if (step === 'sending') return 'Sending...';
+    if (step === 'confirming') return 'Confirming...';
+    if (step === 'success') return 'Sent! ✓';
+    return 'Review Transfer';
+  })();
+
+  const explorerUrl = txHash
+    ? `https://blockscout-passet-hub.parity-testnet.parity.io/tx/${txHash}`
+    : undefined;
 
   return (
     <>
@@ -68,8 +118,8 @@ export default function SendForm() {
               <input
                 type="number"
                 placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={amountIn}
+                onChange={(e) => setAmountIn(e.target.value)}
                 className="flex-1 bg-transparent text-white text-3xl font-bold font-mono outline-none"
               />
               <div className="relative">
@@ -77,13 +127,13 @@ export default function SendForm() {
                   onClick={() => setShowTokenDropdown(!showTokenDropdown)}
                   className="flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] px-3 py-2 rounded-xl text-white font-semibold text-sm transition-colors"
                 >
-                  {token.name}
+                  {selectedToken.name}
                   <ChevronDown size={14} />
                 </button>
                 {showTokenDropdown && (
                   <div className="absolute right-0 top-full mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden z-20 min-w-[100px]">
-                    {tokens.map((t) => (
-                      <button key={t.id} onClick={() => { setToken(t); setShowTokenDropdown(false); }} className="block w-full text-left px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">
+                    {TOKEN_OPTIONS.map((t) => (
+                      <button key={t.id} onClick={() => { setSelectedToken(t); setShowTokenDropdown(false); setQuote(null); }} className="block w-full text-left px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">
                         {t.name}
                       </button>
                     ))}
@@ -92,23 +142,28 @@ export default function SendForm() {
               </div>
             </div>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowChainDropdown(!showChainDropdown)}
-                className="flex items-center gap-2 text-[#8e9191] text-xs hover:text-white transition-colors"
-              >
-                <span className="font-mono text-[#bdf500]">{chain.icon}</span>
-                From {chain.name}
-                <ChevronDown size={12} />
-              </button>
-              {showChainDropdown && (
-                <div className="absolute left-0 top-full mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden z-20 min-w-[160px]">
-                  {chains.map((c) => (
-                    <button key={c.id} onClick={() => { setChain(c); setShowChainDropdown(false); }} className="flex items-center gap-2 w-full px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">
-                      <span className="font-mono text-[#bdf500]">{c.icon}</span>{c.name}
-                    </button>
-                  ))}
-                </div>
+            <div className="flex items-center justify-between">
+              <div className="relative">
+                <button
+                  onClick={() => setShowChainDropdown(!showChainDropdown)}
+                  className="flex items-center gap-2 text-[#8e9191] text-xs hover:text-white transition-colors"
+                >
+                  <span className="font-mono text-[#bdf500]">{chain.icon}</span>
+                  From {chain.name}
+                  <ChevronDown size={12} />
+                </button>
+                {showChainDropdown && (
+                  <div className="absolute left-0 top-full mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden z-20 min-w-[160px]">
+                    {chains.map((c) => (
+                      <button key={c.id} onClick={() => { setChain(c); setShowChainDropdown(false); }} className="flex items-center gap-2 w-full px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">
+                        <span className="font-mono text-[#bdf500]">{c.icon}</span>{c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {isConnected && (
+                <span className="text-[#8e9191] text-xs font-mono">Balance: {balanceFormatted} {selectedToken.name}</span>
               )}
             </div>
           </div>
@@ -128,7 +183,7 @@ export default function SendForm() {
             <div className="text-[#8e9191] text-xs font-semibold uppercase tracking-widest mb-3">Recipient Receives</div>
             <div className="flex items-center gap-3 mb-3">
               <span className="flex-1 text-[#bdf500] text-3xl font-bold font-mono">
-                {received > 0 ? received.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
+                {quote ? formatReceivedAmount(quote.amountOut, corridor.currency) : '—'}
               </span>
               <span className="text-[#8e9191] font-semibold text-sm">{corridor.currency}</span>
             </div>
@@ -142,8 +197,8 @@ export default function SendForm() {
               </button>
               {showCorridorDropdown && (
                 <div className="absolute left-0 top-full mt-1 bg-[#111] border border-white/[0.1] rounded-xl overflow-hidden z-20 min-w-[200px]">
-                  {destinationCorridors.map((c) => (
-                    <button key={c.id} onClick={() => { setCorridor(c); setShowCorridorDropdown(false); }} className="block w-full text-left px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">{c.label}</button>
+                  {CONTRACT_CORRIDORS.map((c) => (
+                    <button key={c.id} onClick={() => { setCorridor(c); setShowCorridorDropdown(false); setQuote(null); }} className="block w-full text-left px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]">{c.label}</button>
                   ))}
                 </div>
               )}
@@ -154,7 +209,7 @@ export default function SendForm() {
             <label className="text-[#8e9191] text-xs font-semibold uppercase tracking-widest mb-2 block">Recipient Address</label>
             <input
               type="text"
-              placeholder="Wallet address or ENS"
+              placeholder="Wallet address (0x...)"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               className="w-full bg-black border border-white/[0.08] focus:border-[rgba(189,245,0,0.35)] rounded-xl px-4 py-3 text-white text-sm font-mono outline-none transition-colors placeholder:text-white/20"
@@ -179,21 +234,28 @@ export default function SendForm() {
                   className="overflow-hidden"
                 >
                   <div className="mt-3 bg-black border border-white/[0.06] rounded-xl p-3 flex flex-col gap-2 text-sm">
-                    <div className="flex justify-between"><span className="text-[#8e9191]">Protocol fee (0.3%)</span><span className="text-white font-mono">${protocolFee.toFixed(4)}</span></div>
+                    <div className="flex justify-between"><span className="text-[#8e9191]">Protocol fee (0.3%)</span><span className="text-white font-mono">{quote ? formatUSDC(quote.fee) : '—'} USDC</span></div>
                     <div className="flex justify-between"><span className="text-[#8e9191]">Network fee</span><span className="text-white font-mono">~$0.002</span></div>
-                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1"><span className="text-white font-semibold">Total fee</span><span className="text-white font-mono font-bold">${totalFee.toFixed(4)}</span></div>
+                    <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1"><span className="text-white font-semibold">Rate</span><span className="text-white font-mono font-bold">1 USDC = {corridor.rate} {corridor.currency}</span></div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
+          {step === 'error' && error && (
+            <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+              {error.slice(0, 120)}
+            </div>
+          )}
+
           <button
             onClick={handleSend}
-            disabled={!amount || !recipient || numAmount <= 0}
+            disabled={isSubmitDisabled && isConnected && isCorrectNetwork}
             className="w-full bg-[#bdf500] hover:bg-[#d8ff7b] disabled:bg-white/[0.07] disabled:text-white/30 text-black font-bold py-4 rounded-2xl transition-all text-base"
           >
-            Review Transfer
+            {isLoading && <Loader2 size={16} className="inline mr-2 animate-spin" />}
+            {submitLabel}
           </button>
         </div>
       </div>
@@ -205,7 +267,7 @@ export default function SendForm() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={(e) => e.target === e.currentTarget && currentStep === 'complete' && handleClose()}
+            onClick={(e) => e.target === e.currentTarget && step === 'success' && handleClose()}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -213,7 +275,7 @@ export default function SendForm() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="bg-[#0a0a0a] border border-white/[0.1] rounded-3xl p-8 w-full max-w-md"
             >
-              {currentStep === 'complete' ? (
+              {step === 'success' ? (
                 <div className="text-center">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -225,15 +287,27 @@ export default function SendForm() {
                   </motion.div>
                   <h3 className="text-white text-2xl font-extrabold mb-2">Transfer Complete!</h3>
                   <p className="text-[#8e9191] mb-1">
-                    <span className="font-mono font-bold text-white">{numAmount} {token.name}</span> sent
+                    <span className="font-mono font-bold text-white">{amountIn} {selectedToken.name}</span> sent
                   </p>
                   <p className="text-[#8e9191] mb-6">
-                    <span className="font-mono font-bold text-[#bdf500]">{received.toLocaleString('en-US', { maximumFractionDigits: 0 })} {corridor.currency}</span> delivered
+                    <span className="font-mono font-bold text-[#bdf500]">
+                      {quote ? formatReceivedAmount(quote.amountOut, corridor.currency) : '—'} {corridor.currency}
+                    </span> delivered
                   </p>
-                  <div className="flex items-center justify-center gap-2 text-[#8e9191] text-sm mb-6">
+                  <div className="flex items-center justify-center gap-2 text-[#8e9191] text-sm mb-4">
                     <Sparkles size={14} className="text-[#bdf500]" />
-                    Settled in ~5.8 seconds via Polkadot Hub
+                    Settled in ~6 seconds via Polkadot Hub
                   </div>
+                  {explorerUrl && (
+                    <a
+                      href={explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 text-[#bdf500] text-sm mb-6 hover:text-[#d8ff7b]"
+                    >
+                      View transaction <ExternalLink size={12} />
+                    </a>
+                  )}
                   <button onClick={handleClose} className="w-full bg-[#bdf500] hover:bg-[#d8ff7b] text-black font-bold py-3 rounded-xl transition-all">
                     Done
                   </button>
@@ -242,11 +316,9 @@ export default function SendForm() {
                 <div>
                   <h3 className="text-white font-bold text-lg mb-6">Processing Transfer</h3>
                   <div className="flex flex-col gap-4">
-                    {['bridging', 'routing', 'settling'].map((s) => {
-                      const stepIndex = steps.indexOf(s as Step);
-                      const currentIndex = steps.indexOf(currentStep);
-                      const isDone = currentIndex > stepIndex;
-                      const isActive = currentIndex === stepIndex;
+                    {TX_STEPS.map((s, stepIndex) => {
+                      const isDone = currentTxIndex > stepIndex;
+                      const isActive = currentTxIndex === stepIndex;
                       return (
                         <div key={s} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                           isActive ? 'border-[rgba(189,245,0,0.3)] bg-[rgba(189,245,0,0.04)]' : isDone ? 'border-[rgba(189,245,0,0.15)] bg-[rgba(189,245,0,0.02)]' : 'border-white/[0.05]'
@@ -255,7 +327,7 @@ export default function SendForm() {
                             {isDone ? <CheckCircle2 size={20} className="text-[#bdf500]" /> : isActive ? <Loader2 size={20} className="text-[#bdf500] animate-spin" /> : <div className="w-3 h-3 rounded-full bg-white/[0.1]" />}
                           </div>
                           <span className={`text-sm font-medium ${isActive ? 'text-white' : isDone ? 'text-[#bdf500]' : 'text-[#8e9191]'}`}>
-                            {stepLabels[s as Step]}
+                            {TX_STEP_LABELS[s]}
                           </span>
                         </div>
                       );

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
-import { faqs } from '../../data/mockData';
+import { faqs } from '../../data/content';
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -26,7 +26,12 @@ export default function FAQ() {
             <p className="text-[#8e9191] text-sm leading-relaxed">
               Still have questions? We're available on Discord and Twitter — or drop us an email.
             </p>
-            <a href="#" className="inline-flex items-center gap-1.5 text-[#bdf500] text-sm font-semibold mt-3 hover:gap-2.5 transition-all duration-200">
+            <a
+              href="https://github.com/Gabrululu/RemitStar/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[#bdf500] text-sm font-semibold mt-3 hover:gap-2.5 transition-all duration-200"
+            >
               Contact us →
             </a>
           </div>

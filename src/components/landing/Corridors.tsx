@@ -1,7 +1,6 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
-import { corridors } from '../../data/mockData';
+import { corridors } from '../../data/content';
 
 export default function Corridors() {
   return (
@@ -21,7 +20,7 @@ export default function Corridors() {
             </h2>
           </div>
           <p className="text-[#8e9191] text-[0.9rem] leading-relaxed max-w-xs">
-            LATAM and APAC are the world's most underserved remittance corridors. We built RemitFlow for them.
+            LATAM and APAC are the world's most underserved remittance corridors. We built RemitStar for them.
           </p>
         </motion.div>
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Send, History, Droplets, Settings } from 'lucide-react';
 

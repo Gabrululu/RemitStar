@@ -15,8 +15,8 @@ contract DeployTokens is Script {
         MockUSDC usdc = new MockUSDC();
         MockUSDT usdt = new MockUSDT();
 
-        usdc.faucet(deployer, 100_000 * 10 ** 6);
-        usdt.faucet(deployer, 100_000 * 10 ** 6);
+        usdc.faucet(deployer, 10_000 * 10 ** 6);
+        usdt.faucet(deployer, 10_000 * 10 ** 6);
 
         vm.stopBroadcast();
 

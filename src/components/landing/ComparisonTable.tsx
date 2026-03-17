@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Minus } from 'lucide-react';
 
@@ -56,7 +55,7 @@ function CompetitorCell({ value }: { value: boolean | string }) {
   );
 }
 
-function RemitFlowCell({ value, isGood }: { value: boolean | string; isGood: boolean }) {
+function RemitStarCell({ value, isGood: _isGood }: { value: boolean | string; isGood: boolean }) {
   if (value === true) {
     return (
       <div className="flex justify-center">
@@ -168,7 +167,7 @@ export default function ComparisonTable() {
                       </div>
                       <div className="inline-flex items-center gap-1.5 bg-[rgba(189,245,0,0.08)] border border-[rgba(189,245,0,0.25)] rounded-full px-3 py-1">
                         <span className="text-[#bdf500] text-[0.5rem]">●</span>
-                        <span className="text-white text-[0.72rem] font-bold">RemitFlow</span>
+                        <span className="text-white text-[0.72rem] font-bold">RemitStar</span>
                       </div>
                     </div>
                   </th>
@@ -201,7 +200,7 @@ export default function ComparisonTable() {
                         borderRight: '1px solid rgba(189,245,0,0.1)',
                       }}
                     >
-                      <RemitFlowCell value={row.rf} isGood={row.rfGood} />
+                      <RemitStarCell value={row.rf} isGood={row.rfGood} />
                     </td>
                   </motion.tr>
                 ))}

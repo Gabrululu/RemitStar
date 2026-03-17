@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ExternalLink, Menu, X, Copy, Check, BookOpen, Code2, Network, Globe as Globe2, HelpCircle, Zap, Shield, ArrowRight } from 'lucide-react';
 
@@ -10,12 +10,15 @@ const sections = [
   { id: 'faq', label: 'FAQ', icon: <HelpCircle size={15} /> },
 ];
 
+const EXPLORER = 'https://blockscout-passet-hub.parity-testnet.parity.io';
+
 const contractAddresses = [
-  { name: 'RemitFlowCore', address: '0x4a9f3b2c1d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a', network: 'Polkadot Hub' },
-  { name: 'USDC Bridge', address: '0x7b2c4d8f1a9e3c5d7b2c4d8f1a9e3c5d7b2c4d8f', network: 'Polkadot Hub' },
-  { name: 'Liquidity Vault (ERC4626)', address: '0x1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f0e', network: 'Polkadot Hub' },
-  { name: 'XCM Router', address: '0x9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d', network: 'Polkadot Hub' },
-  { name: 'Oracle Aggregator', address: '0x3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d', network: 'Ethereum' },
+  { name: 'RemitCore',       address: '0x710051f799D05afa3953B7af11A38C214Bc45B3F', network: 'Polkadot Hub' },
+  { name: 'LiquidityPool',   address: '0xe5038EF6DA68DdF1D0851674F75E152Cc13cE040', network: 'Polkadot Hub' },
+  { name: 'FeeDistributor',  address: '0x094F9e6a7aE4bb9d8d83dfb14F0cD4BD654e12af', network: 'Polkadot Hub' },
+  { name: 'ComplianceGate',  address: '0xa89fb8A3f72C77cA15cfb8a1903f6Ef4D48bed82', network: 'Polkadot Hub' },
+  { name: 'MockUSDC',        address: '0x321a83089D68c37c2Ee4Df00cC30B4D330f0399B', network: 'Polkadot Hub' },
+  { name: 'MockUSDT',        address: '0x2bd8AbEB2F5598f8477560C70c742aFfc22912de', network: 'Polkadot Hub' },
 ];
 
 function CopyButton({ text }: { text: string }) {
@@ -66,7 +69,7 @@ const architectureCode = `[User Wallet] (Ethereum/Base/Arbitrum/Polygon)
 [USDC/USDT Input]
        │
        ▼
-[RemitFlowCore Contract]
+[RemitStarCore Contract]
        │
        ├─── Fee deduction (0.3%)
        │
@@ -79,7 +82,7 @@ const architectureCode = `[User Wallet] (Ethereum/Base/Arbitrum/Polygon)
                                     │
                               [Recipient Wallet]`;
 
-const interfaceCode = `interface IRemitFlowCore {
+const interfaceCode = `interface IRemitStarCore {
   function send(
     address token,
     uint256 amount,
@@ -105,7 +108,7 @@ const docsContent: Record<string, React.ReactNode> = {
       </div>
       <h1 className="text-4xl font-extrabold text-white mb-4 leading-tight">Overview</h1>
       <p className="text-[#8e9191] text-lg mb-8 leading-relaxed">
-        RemitFlow is a cross-chain stablecoin remittance protocol built on Polkadot Hub. It enables fast, cheap, and transparent international money transfers using USDC and USDT stablecoins.
+        RemitStar is a cross-chain stablecoin remittance protocol built on Polkadot Hub. It enables fast, cheap, and transparent international money transfers using USDC and USDT stablecoins.
       </p>
 
       <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -134,7 +137,7 @@ const docsContent: Record<string, React.ReactNode> = {
           Quick Note
         </div>
         <p className="text-[#8e9191] text-sm leading-relaxed">
-          RemitFlow is currently in public testnet. All transactions are simulated with test USDC. Mainnet launch is planned for Q3 2026 pending security audit completion.
+          RemitStar is currently in public testnet. All transactions are simulated with test USDC. Mainnet launch is planned for Q3 2026 pending security audit completion.
         </p>
       </div>
     </div>
@@ -162,10 +165,15 @@ const docsContent: Record<string, React.ReactNode> = {
               </div>
               <div className="flex items-center gap-2">
                 <CopyButton text={c.address} />
-                <button className="flex items-center gap-1.5 text-[#8e9191] hover:text-white text-xs border border-white/[0.08] hover:border-white/[0.15] px-3 py-1.5 rounded-lg transition-colors">
+                <a
+                  href={`${EXPLORER}/address/${c.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[#8e9191] hover:text-white text-xs border border-white/[0.08] hover:border-white/[0.15] px-3 py-1.5 rounded-lg transition-colors"
+                >
                   <ExternalLink size={12} />
                   Explorer
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -190,7 +198,7 @@ const docsContent: Record<string, React.ReactNode> = {
           {
             step: '01',
             title: 'Message Initiation',
-            desc: 'When a user submits a transfer, RemitFlowCore constructs an XCM message containing the transfer intent, amount, and destination.',
+            desc: 'When a user submits a transfer, RemitStarCore constructs an XCM message containing the transfer intent, amount, and destination.',
           },
           {
             step: '02',
@@ -295,12 +303,12 @@ const docsContent: Record<string, React.ReactNode> = {
         Support
       </div>
       <h1 className="text-4xl font-extrabold text-white mb-4">FAQ</h1>
-      <p className="text-[#8e9191] text-lg mb-8">Common questions about RemitFlow.</p>
+      <p className="text-[#8e9191] text-lg mb-8">Common questions about RemitStar.</p>
       <div className="space-y-3">
         {[
           {
-            q: 'Is RemitFlow live on mainnet?',
-            a: 'RemitFlow is currently in testnet. Mainnet launch is planned for Q3 2026 after security audit completion.',
+            q: 'Is RemitStar live on mainnet?',
+            a: 'RemitStar is currently in testnet. Mainnet launch is planned for Q3 2026 after security audit completion.',
           },
           {
             q: 'How do exchange rates stay accurate?',
@@ -311,8 +319,8 @@ const docsContent: Record<string, React.ReactNode> = {
             a: "Failed transfers are automatically reverted within the same transaction via XCM's error handling. Funds are returned to the sender's wallet with no loss, usually within the same block.",
           },
           {
-            q: 'Can I integrate RemitFlow into my app?',
-            a: 'Yes! RemitFlow exposes a simple IRemitFlowCore interface. See the Smart Contracts section for interface details. Developer documentation and SDK are in progress.',
+            q: 'Can I integrate RemitStar into my app?',
+            a: 'Yes! RemitStar exposes a simple IRemitStarCore interface. See the Smart Contracts section for interface details. Developer documentation and SDK are in progress.',
           },
         ].map((item, i) => (
           <details key={i} className="group bg-[#0a0a0a] border border-white/[0.08] hover:border-[rgba(189,245,0,0.2)] rounded-xl overflow-hidden transition-colors">
@@ -339,7 +347,7 @@ export default function DocsPage() {
       <div className="border-b border-white/[0.08] bg-[#060606]/80 backdrop-blur-sm px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-30">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-[#bdf500] text-xl font-bold">●</span>
-          <span className="text-white font-extrabold text-base">RemitFlow</span>
+          <span className="text-white font-extrabold text-base">RemitStar</span>
           <ChevronRight size={14} className="text-[#8e9191]" />
           <span className="text-[#8e9191] text-sm">Docs</span>
         </Link>
@@ -379,7 +387,12 @@ export default function DocsPage() {
 
           <div className="mt-6 pt-6 border-t border-white/[0.06] px-3">
             <div className="text-[#8e9191] text-xs mb-3">Need help?</div>
-            <a href="#" className="flex items-center gap-1.5 text-[#8e9191] hover:text-[#bdf500] text-xs transition-colors">
+            <a
+              href="https://github.com/Gabrululu/RemitStar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[#8e9191] hover:text-[#bdf500] text-xs transition-colors"
+            >
               <ExternalLink size={11} /> GitHub
             </a>
           </div>

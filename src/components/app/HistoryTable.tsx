@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
-import { mockTransfers } from '../../data/mockData';
+import { ExternalLink, RefreshCw } from 'lucide-react';
+import { useTransferHistory } from '../../lib/hooks/useTransferHistory';
+import { useWallet } from '../../lib/hooks/useWallet';
+import { CORRIDORS, corridorId as calcCorridorId } from '../../lib/contracts';
+import { formatTxHash } from '../../lib/utils/format';
 
 type Filter = 'All' | 'Completed' | 'Pending';
+
+const EXPLORER_BASE = 'https://blockscout-passet-hub.parity-testnet.parity.io/tx/';
+
+function findCorridorFlag(corridorHex: string): string {
+  for (const c of CORRIDORS) {
+    if (calcCorridorId(c.id).toLowerCase() === corridorHex.toLowerCase()) {
+      return c.flag;
+    }
+  }
+  return '🌐';
+}
 
 export default function HistoryTable() {
   const [filter, setFilter] = useState<Filter>('All');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
-  const filtered = filter === 'All' ? mockTransfers : mockTransfers.filter((t) => t.status === filter);
+  const { isConnected } = useWallet();
+  const { transfers, isLoading, refetch } = useTransferHistory();
+
+  if (!isConnected) {
+    return (
+      <div className="max-w-4xl mx-auto w-full">
+        <h2 className="text-white font-bold text-xl mb-6">Transfer History</h2>
+        <div className="bg-[#0a0a0a] border border-white/[0.08] rounded-2xl py-16 text-center text-[#8e9191]">
+          Connect your wallet to see your transfers
+        </div>
+      </div>
+    );
+  }
+
+  const filtered = filter === 'All' ? transfers : transfers.filter(() => filter === 'Completed');
 
   return (
     <div className="max-w-4xl mx-auto w-full">
@@ -29,63 +57,76 @@ export default function HistoryTable() {
               {f}
             </button>
           ))}
+          <button
+            onClick={() => void refetch()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-white/[0.05] text-[#8e9191] hover:text-white hover:bg-white/[0.08] transition-colors"
+          >
+            <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
       </div>
 
       <div className="bg-[#0a0a0a] border border-white/[0.08] rounded-2xl overflow-hidden">
         <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 px-5 py-3 text-[#8e9191] text-xs font-semibold uppercase tracking-widest border-b border-white/[0.06]">
-          <span>Date</span>
+          <span>Block</span>
           <span>Amount</span>
           <span>Corridor</span>
           <span>Status</span>
           <span>Fee</span>
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading && filtered.length === 0 ? (
+          <div className="flex flex-col gap-0">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 px-5 py-4 border-b border-white/[0.05]">
+                <div className="h-4 bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-4 bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-4 bg-white/[0.06] rounded animate-pulse hidden md:block" />
+                <div className="h-4 w-16 bg-white/[0.06] rounded animate-pulse hidden md:block" />
+                <div className="h-4 w-12 bg-white/[0.06] rounded animate-pulse hidden md:block" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-[#8e9191]">No transfers found</div>
         ) : (
           filtered.map((transfer, i) => (
-            <div key={transfer.id}>
+            <div key={transfer.transferId}>
               <motion.button
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => setExpandedRow(expandedRow === transfer.id ? null : transfer.id)}
+                onClick={() => setExpandedRow(expandedRow === transfer.transferId ? null : transfer.transferId)}
                 className="w-full grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto_auto] gap-3 md:gap-4 items-center px-5 py-4 border-b border-white/[0.05] hover:bg-white/[0.02] transition-colors text-left"
               >
                 <div>
-                  <div className="text-white text-sm font-medium">{transfer.date.split(' ')[0]}</div>
-                  <div className="text-[#8e9191] text-xs font-mono">{transfer.date.split(' ')[1]}</div>
+                  <div className="text-white text-sm font-medium">Block #{transfer.blockNumber}</div>
+                  <div className="text-[#8e9191] text-xs font-mono">{formatTxHash(transfer.txHash)}</div>
                 </div>
                 <div>
-                  <div className="text-white text-sm font-bold font-mono">{transfer.amount} {transfer.currency}</div>
-                  <div className="text-[#bdf500] text-xs font-mono">
-                    {transfer.received.toLocaleString()} {transfer.receivedCurrency}
-                  </div>
+                  <div className="text-white text-sm font-bold font-mono">{transfer.amountIn} {transfer.tokenSymbol}</div>
+                  <div className="text-[#bdf500] text-xs font-mono">{transfer.amountOut} {(() => {
+                    const c = CORRIDORS.find(cor => calcCorridorId(cor.id).toLowerCase() === transfer.corridorId.toLowerCase());
+                    return c?.currency ?? '';
+                  })()}</div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span>{transfer.fromFlag}</span>
+                  <span>🇺🇸</span>
                   <span className="text-[#8e9191]">→</span>
-                  <span>{transfer.toFlag}</span>
-                  <span className="text-[#8e9191] hidden md:inline">{transfer.corridor.split('→')[1]?.trim()}</span>
+                  <span>{findCorridorFlag(transfer.corridorId)}</span>
+                  <span className="text-[#8e9191] hidden md:inline">{transfer.corridorLabel.split('→')[1]?.trim()}</span>
                 </div>
                 <div>
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    transfer.status === 'Completed'
-                      ? 'bg-[rgba(189,245,0,0.08)] text-[#bdf500] border border-[rgba(189,245,0,0.2)]'
-                      : transfer.status === 'Pending'
-                      ? 'bg-[#FF8800]/10 text-[#FF8800] border border-[#FF8800]/20'
-                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                  }`}>
-                    {transfer.status === 'Pending' && <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />}
-                    {transfer.status}
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[rgba(189,245,0,0.08)] text-[#bdf500] border border-[rgba(189,245,0,0.2)]">
+                    Completed
                   </span>
                 </div>
-                <div className="text-[#8e9191] text-sm font-mono">${transfer.fee.toFixed(2)}</div>
+                <div className="text-[#8e9191] text-sm font-mono">{transfer.fee} USDC</div>
               </motion.button>
 
               <AnimatePresence>
-                {expandedRow === transfer.id && (
+                {expandedRow === transfer.transferId && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
@@ -95,22 +136,28 @@ export default function HistoryTable() {
                     <div className="px-5 py-4 bg-black border-b border-white/[0.05] grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="text-[#8e9191] text-xs mb-1">Recipient</div>
-                        <div className="text-white font-mono">{transfer.recipient}</div>
+                        <div className="text-white font-mono text-xs">{transfer.recipient.slice(0, 10)}...{transfer.recipient.slice(-6)}</div>
                       </div>
                       <div>
                         <div className="text-[#8e9191] text-xs mb-1">Settlement</div>
-                        <div className="text-[#bdf500] font-mono font-semibold">{transfer.settlementTime}</div>
+                        <div className="text-[#bdf500] font-mono font-semibold">~6s</div>
                       </div>
                       <div>
                         <div className="text-[#8e9191] text-xs mb-1">Tx Hash</div>
-                        <div className="flex items-center gap-1 text-[#bdf500] font-mono">
-                          {transfer.txHash}
+                        <a
+                          href={`${EXPLORER_BASE}${transfer.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[#bdf500] font-mono hover:text-[#d8ff7b]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {formatTxHash(transfer.txHash)}
                           <ExternalLink size={12} />
-                        </div>
+                        </a>
                       </div>
                       <div>
                         <div className="text-[#8e9191] text-xs mb-1">Total fee</div>
-                        <div className="text-white font-mono">${transfer.fee.toFixed(4)}</div>
+                        <div className="text-white font-mono">{transfer.fee} USDC</div>
                       </div>
                     </div>
                   </motion.div>

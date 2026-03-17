@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export default function Navbar() {
       <div className="flex items-center justify-between h-14 md:h-16 px-5 md:px-8 lg:px-12">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <span className="text-[#bdf500] text-lg font-black leading-none select-none">●</span>
-          <span className="text-white font-extrabold text-[0.9rem] tracking-tight">RemitFlow</span>
+          <span className="text-white font-extrabold text-[0.9rem] tracking-tight">RemitStar</span>
         </Link>
 
         <div className="hidden md:flex items-center h-full divide-x divide-white/[0.07]">

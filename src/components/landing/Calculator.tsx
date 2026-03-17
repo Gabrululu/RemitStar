@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeftRight, ChevronDown, Clock, ArrowUpRight, Zap } from 'lucide-react';
-import { chains, destinationCorridors } from '../../data/mockData';
+import { usePublicClient } from 'wagmi';
+import { chains } from '../../data/content';
+import { ADDRESSES, REMIT_CORE_ABI, corridorId as calcCorridorId } from '../../lib/contracts';
+import { parseUSDC } from '../../lib/utils/format';
+
+const CALC_CORRIDORS = [
+  { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.74,  symbol: 'S/'  },
+  { id: 'US_PH', label: 'Philippines 🇵🇭', currency: 'PHP', rate: 56.2,  symbol: '₱'   },
+  { id: 'US_ID', label: 'Indonesia 🇮🇩',   currency: 'IDR', rate: 16240, symbol: 'Rp'  },
+  { id: 'US_MX', label: 'Mexico 🇲🇽',      currency: 'MXN', rate: 17.2,  symbol: '$'   },
+  { id: 'US_CO', label: 'Colombia 🇨🇴',    currency: 'COP', rate: 4100,  symbol: '$'   },
+];
 
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: {
   value: number;
@@ -39,18 +50,46 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: {
 export default function Calculator() {
   const [amount, setAmount] = useState('200');
   const [selectedChain, setSelectedChain] = useState(chains[0]);
-  const [selectedCorridor, setSelectedCorridor] = useState(destinationCorridors[0]);
+  const [selectedCorridor, setSelectedCorridor] = useState(CALC_CORRIDORS[0]);
   const [showChainDrop, setShowChainDrop] = useState(false);
   const [showCorridorDrop, setShowCorridorDrop] = useState(false);
   const [showSavings, setShowSavings] = useState(false);
+  const [quote, setQuote] = useState<{ fee: bigint; netAmount: bigint; amountOut: bigint } | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const publicClient = usePublicClient();
 
   const numAmount = parseFloat(amount) || 0;
-  const protocolFee = numAmount * 0.003;
-  const networkFee = 0.002;
-  const totalFee = protocolFee + networkFee;
-  const received = (numAmount - totalFee) * selectedCorridor.rate;
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (numAmount <= 0 || !publicClient) { setQuote(null); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await publicClient.readContract({
+          address: ADDRESSES.RemitCore,
+          abi: REMIT_CORE_ABI,
+          functionName: 'getQuote',
+          args: [calcCorridorId(selectedCorridor.id), parseUSDC(amount), ADDRESSES.USDC],
+        }) as [bigint, bigint, bigint];
+        setQuote({ fee: result[0], netAmount: result[1], amountOut: result[2] });
+      } catch (e) {
+        // quote failed — no wallet or RPC unavailable
+        setQuote(null);
+      }
+    }, 800);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [amount, selectedCorridor.id, publicClient]);
+
+  const feeNum = quote ? Number(quote.fee) / 1e6 : numAmount * 0.003;
   const westernUnionFee = numAmount * 0.065;
-  const savings = westernUnionFee - totalFee;
+  const savings = westernUnionFee - feeNum;
+
+  const receivedNum = quote
+    ? (selectedCorridor.currency === 'IDR' || selectedCorridor.currency === 'VND')
+      ? Number(quote.amountOut)
+      : Number(quote.amountOut) / 1e6
+    : (numAmount - feeNum) * selectedCorridor.rate;
 
   return (
     <section id="calculator" className="py-24 md:py-32 px-5 md:px-8 lg:px-12 bg-black">
@@ -175,7 +214,7 @@ export default function Calculator() {
               <div className="flex items-baseline gap-2 mb-4">
                 <span className="text-[#747878] text-lg">{selectedCorridor.symbol}</span>
                 <span className="flex-1 text-[#bdf500] text-[2.5rem] md:text-[3rem] font-black font-mono leading-none tracking-tight">
-                  <AnimatedNumber value={received > 0 ? received : 0} decimals={0} />
+                  <AnimatedNumber value={receivedNum > 0 ? receivedNum : 0} decimals={0} />
                 </span>
                 <span className="text-[#747878] text-sm font-medium">{selectedCorridor.currency}</span>
               </div>
@@ -198,10 +237,10 @@ export default function Calculator() {
                       boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
                     }}
                   >
-                    {destinationCorridors.map((c) => (
+                    {CALC_CORRIDORS.map((c) => (
                       <button
                         key={c.id}
-                        onClick={() => { setSelectedCorridor(c); setShowCorridorDrop(false); }}
+                        onClick={() => { setSelectedCorridor(c); setShowCorridorDrop(false); setQuote(null); }}
                         className="block w-full text-left px-3 py-2.5 text-white text-sm hover:bg-white/[0.05]"
                       >
                         {c.label}
@@ -215,7 +254,7 @@ export default function Calculator() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             {[
-              { label: 'Protocol fee', value: totalFee, prefix: '$', decimals: 3, sub: '0.3%', green: false },
+              { label: 'Protocol fee', value: feeNum, prefix: '$', decimals: 3, sub: '0.3%', green: false },
               { label: 'Network fee', valueStr: '~$0.002', sub: 'Polkadot Hub', green: false },
               { label: 'Exchange rate', valueStr: selectedCorridor.rate.toLocaleString(), sub: `1 USDC → ${selectedCorridor.currency}`, green: false },
               { label: 'Arrival time', valueStr: '~6 seconds', sub: 'avg 5.8s', green: true },
@@ -282,7 +321,7 @@ export default function Calculator() {
                       You save ${savings.toFixed(2)} vs Western Union
                     </div>
                     <div className="text-[#8e9191] text-xs">
-                      WU charges ${westernUnionFee.toFixed(2)} (6.5%) — RemitFlow charges ${totalFee.toFixed(3)} (0.3%). That's {((savings / westernUnionFee) * 100).toFixed(0)}% less in fees.
+                      WU charges ${westernUnionFee.toFixed(2)} (6.5%) — RemitStar charges ${feeNum.toFixed(3)} (0.3%). That's {((savings / westernUnionFee) * 100).toFixed(0)}% less in fees.
                     </div>
                   </div>
                 </div>
