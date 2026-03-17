@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight, Send, Clock, Shield, Wifi } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const badgeWords = ['Polkadot Hub', '6 seconds', 'LATAM & APAC', 'Non-custodial', '0.3% fee', 'Open source'];
 
 function PhoneMockup() {
   const txItems = [
@@ -373,21 +372,6 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.1 }}
-        className="border-t border-white/[0.06] overflow-hidden py-3"
-      >
-        <div className="badge-marquee flex">
-          {[...badgeWords, ...badgeWords, ...badgeWords].map((word, i) => (
-            <span key={i} className="flex items-center gap-4 text-[#8e9191] text-[0.72rem] font-medium whitespace-nowrap px-5">
-              <span className="text-[#bdf500] text-[0.4rem]">●</span>
-              {word}
-            </span>
-          ))}
-        </div>
-      </motion.div>
     </section>
   );
 }
