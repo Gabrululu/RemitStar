@@ -43,13 +43,19 @@ Four contracts use OZ libraries in production-grade patterns:
 - Live exchange rate quotes
 - 5 active remittance corridors
 
-## Contract Addresses (Polkadot Hub Testnet — chainId 420420417)
+## Contract Addresses (Polkadot Hub Testnet)
 - MockUSDC:       0x321a83089D68c37c2Ee4Df00cC30B4D330f0399B
 - MockUSDT:       0x2bd8AbEB2F5598f8477560C70c742aFfc22912de
 - ComplianceGate: 0xa89fb8A3f72C77cA15cfb8a1903f6Ef4D48bed82
 - LiquidityPool:  0xe5038EF6DA68DdF1D0851674F75E152Cc13cE040
 - FeeDistributor: 0x094F9e6a7aE4bb9d8d83dfb14F0cD4BD654e12af
 - RemitCore:      0x710051f799D05afa3953B7af11A38C214Bc45B3F
+
+## Contract Verification
+- RemitCore: ✅ Verified
+- ComplianceGate: ✅ Verified  
+- FeeDistributor: ✅ Verified
+- LiquidityPool: ✅ Verified
 
 ## Frontend
 https://remitstar.vercel.app
