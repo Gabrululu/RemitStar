@@ -4,11 +4,11 @@ const CACHE_KEY = 'remitstar_rates';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes
 
 const FALLBACK_RATES: Record<string, number> = {
-  PEN: 3.74,
-  PHP: 56.2,
-  IDR: 16240,
-  MXN: 17.2,
-  COP: 4100,
+  PEN: 3.45,
+  PHP: 59.81,
+  IDR: 16980,
+  MXN: 17.68,
+  COP: 3701,
 };
 
 const CURRENCIES = Object.keys(FALLBACK_RATES);

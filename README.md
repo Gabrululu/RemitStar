@@ -13,7 +13,7 @@ Traditional services charge 5–7% and take 1–3 days. RemitStar changes that.
 
 ## Live Demo
 
-- Frontend: [your deployed URL]
+- Frontend: https://remit-star.vercel.app
 - Network: Polkadot Hub Testnet (chainId: 420420417)
 - Explorer: https://blockscout-passet-hub.parity-testnet.parity.io
 
@@ -42,13 +42,13 @@ RemitCore.sol          ← Main entry point, route + compliance check
 
 ## Supported Corridors
 
-| Route | Currency | Rate |
-|---|---|---|
-| USA → Peru | PEN | 1 USDC = 3.74 PEN |
-| USA → Philippines | PHP | 1 USDC = 56.2 PHP |
-| USA → Indonesia | IDR | 1 USDC = 16,240 IDR |
-| USA → Mexico | MXN | 1 USDC = 17.2 MXN |
-| USA → Colombia | COP | 1 USDC = 4,100 COP |
+| Route | Currency | Rate | Updated |
+|---|---|---|---|
+| USA → Peru | PEN | 1 USDC = 3.45 PEN | Mar 18, 2026 |
+| USA → Philippines | PHP | 1 USDC = 59.81 PHP | Mar 18, 2026 |
+| USA → Indonesia | IDR | 1 USDC = 16,980 IDR | Mar 18, 2026 |
+| USA → Mexico | MXN | 1 USDC = 17.68 MXN | Mar 18, 2026 |
+| USA → Colombia | COP | 1 USDC = 3,701 COP | Mar 18, 2026 |
 
 ## Smart Contract Stack
 

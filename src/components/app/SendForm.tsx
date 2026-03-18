@@ -15,11 +15,11 @@ const TOKEN_OPTIONS = [
 ];
 
 const CONTRACT_CORRIDORS = [
-  { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.74,  symbol: 'S/'  },
-  { id: 'US_PH', label: 'Philippines 🇵🇭', currency: 'PHP', rate: 56.2,  symbol: '₱'   },
-  { id: 'US_ID', label: 'Indonesia 🇮🇩',   currency: 'IDR', rate: 16240, symbol: 'Rp'  },
-  { id: 'US_MX', label: 'Mexico 🇲🇽',      currency: 'MXN', rate: 17.2,  symbol: '$'   },
-  { id: 'US_CO', label: 'Colombia 🇨🇴',    currency: 'COP', rate: 4100,  symbol: '$'   },
+  { id: 'US_PE', label: 'Peru 🇵🇪',        currency: 'PEN', rate: 3.45,  symbol: 'S/'  },
+  { id: 'US_PH', label: 'Philippines 🇵🇭', currency: 'PHP', rate: 59.81, symbol: '₱'   },
+  { id: 'US_ID', label: 'Indonesia 🇮🇩',   currency: 'IDR', rate: 16980, symbol: 'Rp'  },
+  { id: 'US_MX', label: 'Mexico 🇲🇽',      currency: 'MXN', rate: 17.68, symbol: '$'   },
+  { id: 'US_CO', label: 'Colombia 🇨🇴',    currency: 'COP', rate: 3701,  symbol: '$'   },
 ];
 
 const TX_STEPS = ['approving', 'sending', 'confirming'] as const;

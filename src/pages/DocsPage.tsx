@@ -269,14 +269,14 @@ const docsContent: Record<string, React.ReactNode> = {
           ))}
         </div>
         {[
-          { corridor: '🇺🇸 USA → 🇵🇪 Peru', currency: 'PEN', rate: '3.74', fee: '0.30%' },
-          { corridor: '🇺🇸 USA → 🇵🇭 Philippines', currency: 'PHP', rate: '56.20', fee: '0.30%' },
-          { corridor: '🇸🇬 Singapore → 🇮🇩 Indonesia', currency: 'IDR', rate: '16,240', fee: '0.31%' },
-          { corridor: '🇺🇸 USA → 🇲🇽 Mexico', currency: 'MXN', rate: '17.20', fee: '0.30%' },
-          { corridor: '🇯🇵 Japan → 🇻🇳 Vietnam', currency: 'VND', rate: '25,100', fee: '0.31%' },
-          { corridor: '🇪🇸 Spain → 🇨🇴 Colombia', currency: 'COP', rate: '4,280', fee: '0.30%' },
-          { corridor: '🇦🇪 UAE → 🇮🇳 India', currency: 'INR', rate: '22.70', fee: '0.29%' },
-          { corridor: '🇦🇺 Australia → 🇵🇭 Philippines', currency: 'PHP', rate: '37.40', fee: '0.30%' },
+          { corridor: '🇺🇸 USA → 🇵🇪 Peru', currency: 'PEN', rate: '3.45', fee: '0.30%' },
+          { corridor: '🇺🇸 USA → 🇵🇭 Philippines', currency: 'PHP', rate: '59.81', fee: '0.30%' },
+          { corridor: '🇸🇬 Singapore → 🇮🇩 Indonesia', currency: 'IDR', rate: '13,220', fee: '0.31%' },
+          { corridor: '🇺🇸 USA → 🇲🇽 Mexico', currency: 'MXN', rate: '17.68', fee: '0.30%' },
+          { corridor: '🇯🇵 Japan → 🇻🇳 Vietnam', currency: 'VND', rate: '165.85', fee: '0.31%' },
+          { corridor: '🇪🇸 Spain → 🇨🇴 Colombia', currency: 'COP', rate: '4,034', fee: '0.30%' },
+          { corridor: '🇦🇪 UAE → 🇮🇳 India', currency: 'INR', rate: '25.17', fee: '0.29%' },
+          { corridor: '🇦🇺 Australia → 🇵🇭 Philippines', currency: 'PHP', rate: '42.16', fee: '0.30%' },
         ].map((row) => (
           <div key={row.corridor} className="grid grid-cols-[1.5fr_0.7fr_1fr_0.7fr_0.8fr] gap-3 px-5 py-3.5 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors items-center">
             <div className="text-white text-sm">{row.corridor}</div>

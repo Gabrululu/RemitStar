@@ -61,6 +61,16 @@ export const ERC20_ABI = [
     ],
     outputs: [{ name: '', type: 'bool' }],
   },
+  {
+    name: 'faucet',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
 ] as const
 
 export const REMIT_CORE_ABI = [
@@ -241,14 +251,21 @@ export const COMPLIANCE_ABI = [
     inputs: [{ name: 'user', type: 'address' }],
     outputs: [{ name: '', type: 'bool' }],
   },
+  {
+    name: 'approveKYC',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [],
+  },
 ] as const
 
 export const CORRIDORS = [
-  { id: 'US_PE', label: 'USA → Peru',        flag: '🇵🇪', currency: 'PEN', rate: 3.74     },
-  { id: 'US_PH', label: 'USA → Philippines', flag: '🇵🇭', currency: 'PHP', rate: 56.2     },
-  { id: 'US_ID', label: 'USA → Indonesia',   flag: '🇮🇩', currency: 'IDR', rate: 16240    },
-  { id: 'US_MX', label: 'USA → Mexico',      flag: '🇲🇽', currency: 'MXN', rate: 17.2     },
-  { id: 'US_CO', label: 'USA → Colombia',    flag: '🇨🇴', currency: 'COP', rate: 4100     },
+  { id: 'US_PE', label: 'USA → Peru',        flag: '🇵🇪', currency: 'PEN', rate: 3.45     },
+  { id: 'US_PH', label: 'USA → Philippines', flag: '🇵🇭', currency: 'PHP', rate: 59.81    },
+  { id: 'US_ID', label: 'USA → Indonesia',   flag: '🇮🇩', currency: 'IDR', rate: 16980    },
+  { id: 'US_MX', label: 'USA → Mexico',      flag: '🇲🇽', currency: 'MXN', rate: 17.68    },
+  { id: 'US_CO', label: 'USA → Colombia',    flag: '🇨🇴', currency: 'COP', rate: 3701     },
 ] as const
 
 export function corridorId(id: string): `0x${string}` {
