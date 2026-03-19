@@ -14,8 +14,8 @@ Traditional services charge 5–7% and take 1–3 days. RemitStar changes that.
 ## Live Demo
 
 - Frontend: https://remit-star.vercel.app
-- Network: Polkadot Hub Testnet (chainId: 420420417)
-- Explorer: https://blockscout-passet-hub.parity-testnet.parity.io
+- Network: Polkadot Hub Testnet
+- Explorer: https://assethub-paseo.subscan.io/
 
 ## Deployed Contracts (Polkadot Hub Testnet)
 
@@ -55,7 +55,7 @@ RemitCore.sol          ← Main entry point, route + compliance check
 - **Solidity** 0.8.24
 - **Foundry** — build, test, deploy
 - **OpenZeppelin** — AccessControl, ERC4626, Ownable, Pausable, ReentrancyGuard
-- **Network** — Polkadot Hub Testnet (chainId 420420417)
+- **Network** — Polkadot Hub Testnet 
 
 ## Frontend Stack
 
