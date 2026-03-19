@@ -11,8 +11,8 @@ export const polkadotHubTestnet = defineChain({
   },
   blockExplorers: {
     default: {
-      name: 'Blockscout',
-      url: 'https://blockscout-passet-hub.parity-testnet.parity.io',
+      name: 'Subscan',
+      url: 'https://assethub-paseo.subscan.io',
     },
   },
 })

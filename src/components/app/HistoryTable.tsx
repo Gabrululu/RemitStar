@@ -9,7 +9,7 @@ import { formatTxHash } from '../../lib/utils/format';
 
 type Filter = 'All' | 'Completed' | 'Pending';
 
-const EXPLORER_BASE = 'https://blockscout-passet-hub.parity-testnet.parity.io/tx/';
+const EXPLORER_BASE = 'https://assethub-paseo.subscan.io/extrinsic/';
 
 function findCorridorFlag(corridorHex: string): string {
   for (const c of CORRIDORS) {

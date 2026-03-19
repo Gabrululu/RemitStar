@@ -137,7 +137,7 @@ export const corridors: Corridor[] = [
 export const faqs: FAQItem[] = [
   {
     question: 'What stablecoins are supported?',
-    answer: 'RemitStar currently supports USDC and USDT on Polkadot Hub Testnet. All transfers are routed through RemitCore, settle on-chain in ~6 seconds, and are fully auditable on the Blockscout explorer.',
+    answer: 'RemitStar currently supports USDC and USDT on Polkadot Hub Testnet. All transfers are routed through RemitCore, settle on-chain in ~6 seconds, and are fully auditable on the Subscan explorer.',
   },
   {
     question: 'Do I need a Polkadot wallet?',

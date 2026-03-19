@@ -105,7 +105,7 @@ export default function SendForm() {
   })();
 
   const explorerUrl = txHash
-    ? `https://blockscout-passet-hub.parity-testnet.parity.io/tx/${txHash}`
+    ? `https://assethub-paseo.subscan.io/extrinsic/${txHash}`
     : undefined;
 
   return (

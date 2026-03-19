@@ -10,7 +10,7 @@ const sections = [
   { id: 'faq', label: 'FAQ', icon: <HelpCircle size={15} /> },
 ];
 
-const EXPLORER = 'https://blockscout-passet-hub.parity-testnet.parity.io';
+const EXPLORER = 'https://assethub-paseo.subscan.io';
 
 const contractAddresses = [
   { name: 'RemitCore',       address: '0x710051f799D05afa3953B7af11A38C214Bc45B3F', network: 'Polkadot Hub' },
@@ -166,7 +166,7 @@ const docsContent: Record<string, React.ReactNode> = {
               <div className="flex items-center gap-2">
                 <CopyButton text={c.address} />
                 <a
-                  href={`${EXPLORER}/address/${c.address}`}
+                  href={`${EXPLORER}/account/${c.address}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-[#8e9191] hover:text-white text-xs border border-white/[0.08] hover:border-white/[0.15] px-3 py-1.5 rounded-lg transition-colors"

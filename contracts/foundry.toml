@@ -11,4 +11,4 @@ remappings = ["@openzeppelin/=lib/openzeppelin-contracts/"]
 polkadot_hub_testnet = "${RPC_URL}"
 
 [etherscan]
-polkadot_hub_testnet = { key = "any", url = "https://blockscout-passet-hub.parity-testnet.parity.io/api" }
+polkadot_hub_testnet = { key = "any", url = "https://assethub-paseo.subscan.io/api" }

@@ -199,7 +199,7 @@ export default function AppSettings() {
                   <div className="text-[#8e9191] text-xs">Polkadot Hub Testnet</div>
                   {address && (
                     <a
-                      href={`https://blockscout-passet-hub.parity-testnet.parity.io/address/${address}`}
+                      href={`https://assethub-paseo.subscan.io/account/${address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#bdf500] text-[0.7rem] hover:underline"

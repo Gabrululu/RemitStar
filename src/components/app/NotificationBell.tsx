@@ -128,7 +128,7 @@ export default function NotificationBell() {
                     <p className="text-[#8e9191] text-xs mt-0.5">{n.body}</p>
                     {n.txHash && (
                       <a
-                        href={`https://blockscout-passet-hub.parity-testnet.parity.io/tx/${n.txHash}`}
+                        href={`https://assethub-paseo.subscan.io/extrinsic/${n.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#bdf500] text-[0.7rem] hover:underline mt-1 inline-block"

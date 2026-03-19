@@ -15,7 +15,8 @@ Traditional services charge 5–7% and take 1–3 days. RemitStar changes that.
 
 - Frontend: https://remit-star.vercel.app
 - Network: Polkadot Hub Testnet
-- Explorer: https://assethub-paseo.subscan.io/
+- Explorer: 
+
 
 ## Deployed Contracts (Polkadot Hub Testnet)
 
